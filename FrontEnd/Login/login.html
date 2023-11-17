@@ -22,22 +22,21 @@
                     <div class="form sign-up">
                         <div class="input-group">
                             <i class='bx bxs-user'></i>
-                            <input type="text" placeholder="Name">
+                            <input type="text" id="name" placeholder="Name" required >
                         </div>
                         <div class="input-group">
                             <i class='bx bx-mail-send'></i>
-                            <input type="email" placeholder="Email">
+                            <input type="email" id="email" placeholder="Email" required>
                         </div>
                         <div class="input-group">
                             <i class='bx bxs-phone-call'></i>
-                            <input type="tel" placeholder="Mobile Number" maxlength="10" minlength="10">
+                            <input type="tel" id="number" placeholder="Mobile Number" maxlength="10" minlength="10" required>
                         </div>
                         <div class="input-group">
                             <i class='bx bxs-lock-alt'></i>
-                            <input type="password" placeholder="Password">
+                            <input type="password" id="password" placeholder="Password" required>
                         </div>
-
-                        <button>
+                        <button onclick="SignUp(event)">
                             Sign up
                         </button>
                         <p>
@@ -68,11 +67,11 @@
                             <i class='bx bxs-lock-alt'></i>
                             <input type="password" placeholder="Password">
                         </div>
-                        <button>
+                        <button id="sign-in">
                             Sign in
                         </button>
                         <p>
-                            <b>
+                            <b onclick="forgetPassword()" class="pointer">
                                 Forgot password?
                             </b>
                         </p>
@@ -117,5 +116,6 @@
         <!-- END CONTENT SECTION -->
     </div>
 </body>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script src="./login.js"></script>
 </html>

@@ -1,6 +1,6 @@
 const Users = require('../models/users');
 const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken')
+const jwt = require('jsonwebtoken');
 
 // Token Generator
 const generateAccessToken = (id, name) => {
@@ -58,7 +58,7 @@ const signin= async (req, res, next) => {
             email: email
             }
         });
-        
+
         // Check if the user exists
         if (!user) {
             return res.status(404).json({ success: false, message: 'User does not exist' });

@@ -6,10 +6,12 @@ const cors= require('cors')
 const app = express();
 const path= require('path')
 const sequelize= require('./connection/database');
-const bodyParser = require('body-parser');
 
 const Users = require('./models/users');
+const Chat = require('./models/chat');
+
 const userRoutes = require('./routes/users')
+const chatRoutes= require('./routes/chat')
 
 app.use(express.json());
 app.use(
@@ -18,6 +20,10 @@ app.use(
   })
 );
 app.use('/user', userRoutes);
+app.use('/chat',chatRoutes);
+
+Users.hasMany(Chat);
+Chat.belongsTo(Users);
 
 
 

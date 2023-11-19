@@ -61,7 +61,7 @@ try
     {
       alert("User Successfully Logged In!")
       localStorage.setItem("token", response.data.token);
-      // window.location.href="../Expense/expense.html"
+      window.location.href="../HomePage/main.html"
   }
 }
 catch(err)

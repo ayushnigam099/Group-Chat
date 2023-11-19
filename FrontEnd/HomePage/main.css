@@ -2,7 +2,52 @@
 *{
     font-family: 'Poppins', sans-serif;
 }
+ :root {
+            --primary-color: #3498db; /* Blue */
+            --secondary-color: #e3eae6; /* Green */
+            --text-color: #333; /* Dark Gray */
+            --bg-color: #f8f9fa; /* Light Gray */
+            --navbar-bg: var(--primary-color);
+            --navbar-text: #fff; /* White */
+            --btn-primary-bg: var(--primary-color);
+            --btn-primary-text: #fff; /* White */
+            --btn-secondary-bg: var(--secondary-color);
+            --btn-secondary-text: #fff; /* White */
+            --card-bg: #fff; /* White */
+            --card-border: #dee2e6; /* Light Gray */
+            --footer-bg: var(--primary-color);
+            --footer-text: #fff; /* White */
+        }
 
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        .nav, .navbar {
+            background-color: var(--navbar-bg);
+            color: var(--navbar-text);
+        }
+
+        .btn-primary {
+            background-color: var(--btn-primary-bg);
+            color: var(--btn-primary-text);
+        }
+
+        .btn-secondary {
+            background-color: var(--btn-secondary-bg);
+            color: var(--btn-secondary-text);
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--card-border);
+        }
+
+        footer {
+            background-color: var(--footer-bg);
+            color: var(--footer-text);
+        }
 /* Add this CSS to style the scrollbar */
     .overflow-y-scroll {
         scrollbar-width: thin;

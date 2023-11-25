@@ -1,6 +1,8 @@
 let input_message= document.getElementById("flexInput");
 let form = document.getElementById("message_form");
 
+document.addEventListener('DOMContentLoaded', getMsgs);
+
 async function SendMsg(e)
 {
     e.preventDefault();
@@ -28,4 +30,22 @@ catch(err)
         alert("Internal Server Error, Try Again Later");
     }
 }
+}
+async function getMsgs(e){
+    e.preventDefault();
+    const token= localStorage.getItem("token");
+    try{
+      let msz= await axios.get("http://localhost:4400/chat/get-messages",{ headers: { "Authorization": token }} );
+      if(msz.status==200)
+      {
+        console.log('>>>>>>>>>', msz);
+        
+      }
+    }
+    catch(err)
+    {
+        console.log(err);
+    }
+
+
 }

@@ -24,6 +24,23 @@ const chatHistory= async(req,res,next)=>
 
 }
 
+const getHistory= async(req,res,next)=>
+{
+  try {
+    let messages = await req.user.getChats({
+      attributes: { exclude: ['UserId'] }
+    });
+    res.status(200).json({Success:true , messages})
+  }
+  catch(error)
+  {
+    console.log(">>>>>>>",error);
+    res.status(500).json({error: "Internal Server Error"});
+  }
+}
+
+
 module.exports = {
     chatHistory,
+    getHistory,
 }

@@ -32,9 +32,8 @@ const getHistory= async(req,res,next)=>
     });
     res.status(200).json({Success:true , messages})
   }
-  catch(error)
+  catch(err)
   {
-    console.log(">>>>>>>",error);
     res.status(500).json({error: "Internal Server Error"});
   }
 }

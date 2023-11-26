@@ -1,7 +1,10 @@
 let form = document.getElementById("message_form");
 let input_message= document.getElementById("flexInput");
 let chat_body= document.getElementById('chat_body');
-document.addEventListener('DOMContentLoaded', getMsgs);
+document.addEventListener('DOMContentLoaded', () => {
+    getMsgs(); // Initial call when the DOM is loaded
+    setInterval(getMsgs, 1000); // Call getMsgs every 1000 milliseconds (1 second)
+});
 
 async function SendMsg(e)
 {

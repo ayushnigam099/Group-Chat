@@ -1,72 +1,139 @@
-let form = document.getElementById("message_form");
-let input_message= document.getElementById("flexInput");
-let chat_body= document.getElementById('chat_body');
-document.addEventListener('DOMContentLoaded', () => {
-    getMsgs(); // Initial call when the DOM is loaded
-    setInterval(getMsgs, 1000); // Call getMsgs every 1000 milliseconds (1 second)
-});
+const messageTextArea = document.getElementById("messageTextArea");
+const messageSendBtn = document.getElementById("messageSendBtn");
+const chatBoxBody = document.getElementById("chatBoxBody");
 
-async function SendMsg(e)
-{
-    e.preventDefault();
-    try{
-    const token= localStorage.getItem("token");
+messageSendBtn.addEventListener("click", messageSend);
+document.addEventListener("DOMContentLoaded", getMessagesFromLocalStorage);
+
+function decodeToken(token) {
+  const base64Url = token.split(".")[1];
+  const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+  const jsonPayload = decodeURIComponent(
+    atob(base64)
+    .split("")
+    .map(function (c) {
+      return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+    })
+    .join("")
+  );
+  return JSON.parse(jsonPayload);
+}
+
+async function messageSend() {
+    try {
+        const token = localStorage.getItem("token");
     const details={
-        message: input_message.value,
+        message: messageTextArea.value,
     }
-    let response= await axios.post("http://localhost:4400/chat/message", details, { headers: { "Authorization": token }});
-    if(response.status==200)
-    {
-        form.reset();
-        
-    }
-}
-catch(err)
-{
-    console.log(err);
-    if(err.response.status== 400)
-    {
-        alert('Please Type Your Message');
-    }
-    else
-    {
-        alert("Internal Server Error, Try Again Later");
-    }
-}
-}
-async function getMsgs(e){
-    e.preventDefault();
-    const token= localStorage.getItem("token");
-    try{
-        let messages= await axios.get("http://localhost:4400/chat/get-messages",{ headers: { "Authorization": token }} );
-        if(messages.status==200)
-        {
-        console.log('>>>>>>>>>', messages.data.messages);
-      chat_body.innerHTML = "";
-      let messageText = "";
-      messages.data.messages.forEach((ele) => {
-        console.log("...............",ele)
-          const date = new Date(ele.date_time);
-          const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-          const formattedDate = date.toLocaleString('en-US', options);
-          messageText += `                            
-          <div class="col-12 mb-2 pe-0">
-              <div class="card p-2 float-end rounded-4 self-chat-class">
-                  <p class="text-primary my-0"><small>${ele.name}</small></p>
-                  <p class="my-0">${ele.message}</p>
-                  <small class="text-muted text-end">${formattedDate}</small>
-              </div>
-          </div>`})
-      chat_body.innerHTML = messageText;
-      chat_container.scrollTop = chat_container.scrollHeight;
+    const res = await axios.post(
+      "http://localhost:4400/chat/sendMessage", details,
+        { headers: { "Authorization": token }}
+    );
+    messageTextArea.value = "";
+  } catch (err){
+  console.log(err);
+  if(err.response.status== 400)
+  {
+      alert('Please Type Your Message');
   }
-      }
-    catch(err)
-    {
-        console.log(err);
-        alert("Internal Server Error, Try Again Later");
-
-    }
-
-
+  else
+  {
+      alert("Internal Server Error, Try Again Later");
+  }
 }
+}
+
+
+async function getMessages() {
+  try {
+    const token = localStorage.getItem("token");
+    let param;
+    const localStorageChats = JSON.parse(localStorage.getItem("chats"));
+    if (localStorageChats) {
+      let array = JSON.parse(localStorage.getItem("chats"));
+      let length = JSON.parse(localStorage.getItem("chats")).length;
+      param = array[length - 1].id;
+    }
+    const res = await axios.get(
+      `http://localhost:4400/chat/getMessages/${param}`, { headers: { "Authorization": token }}
+    );
+    const decodedToken = decodeToken(token);
+    const userId = decodedToken.userId;
+
+    const chats = JSON.parse(localStorage.getItem("chats"));
+    if (!chats) {
+      localStorage.setItem("chats", JSON.stringify(res.data.messages));
+    } else {
+      res.data.messages.forEach((message) => {
+        chats.push(message);
+      });
+      localStorage.setItem("chats", JSON.stringify(chats));
+    }
+    let chatHTML = '';
+
+    res.data.messages.forEach((message) => {
+      if (message.userId == userId) {
+        chatHTML += `
+        <div>
+          <span class="d-flex justify-content-end px-3 mb-1 text-uppercase small text-white">You</span>
+          <div class="d-flex justify-content-end mb-4 msg_cotainer_send">${message.message}</div>
+        </div>`;
+    } else {
+      chatHTML += `
+        <div>
+          <span class="d-flex justify-content-start px-3 mb-1 text-uppercase small text-white">${message.name}</span>
+          <div class="d-flex justify-content-start mb-4 msg_cotainer">${message.message}</div>
+        </div>`;
+    }
+    });
+    chatBoxBody.innerHTML = chatHTML;
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+setInterval(() => {
+  getMessages();
+}, 5000);
+
+async function getMessagesFromLocalStorage() {
+    const messages = JSON.parse(localStorage.getItem("chats"));
+  
+    const token = localStorage.getItem("token");
+    const decodedToken = decodeToken(token);
+    const userId = decodedToken.userId;
+    chatBoxBody.innerHTML = "";
+  
+    if (messages) {
+      messages.forEach((message) => {
+        const div = document.createElement("div");
+  
+        let messageSendbyHTML, messageBoxHTML;
+  
+        if (message.userId == userId) {
+          messageSendbyHTML = `
+            <span class="d-flex justify-content-end px-3 mb-1 text-uppercase small text-white">You</span>
+          `;
+          messageBoxHTML = `
+            <div class="d-flex justify-content-end mb-4">
+              <div class="msg_cotainer_send">${message.message}</div>
+            </div>
+          `;
+        } else {
+          messageSendbyHTML = `
+            <span class="d-flex justify-content-start px-3 mb-1 text-uppercase small text-white">${message.name}</span>
+          `;
+          messageBoxHTML = `
+            <div class="d-flex justify-content-start mb-4">
+              <div class="msg_cotainer">${message.message}</div>
+            </div>
+          `;
+        }
+  
+        div.innerHTML = `${messageSendbyHTML}${messageBoxHTML}`;
+        chatBoxBody.appendChild(div);
+      });
+    }
+  }
+  
+

@@ -1,9 +1,10 @@
 const Chat = require('../models/chat');
 const Users = require('../models/users');
 const sequelize= require('../connection/database')
+const { Op } = require("sequelize");
 
 
-const chatHistory= async(req,res,next)=>
+const sendMessage= async(req,res,next)=>
 {
     function isStringValidate(string) {
         return string === undefined || string.length === 0;
@@ -15,7 +16,7 @@ const chatHistory= async(req,res,next)=>
       }
       const dataValues = await Chat.create(
         { name: req.user.name, message, UserId: req.user.id });
-        res.status(200).json({Success:true , dataValues})
+        res.status(200).json({Success:true})
    }
    catch(err)
    {
@@ -24,12 +25,16 @@ const chatHistory= async(req,res,next)=>
 
 }
 
-const getHistory= async(req,res,next)=>
+const getMessages= async(req,res,next)=>
 {
   try {
+    const param = req.params.param;
     let messages = await Chat.findAll({
-      attributes: { exclude: ['UserId'] , order: [['date_time', 'ASC']],}
-    });
+      attributes: { exclude: ['UserId'] , order: [['date_time', 'ASC']], where: {
+        id: {
+          [Op.gt]: param,
+        }}
+    }});
     res.status(200).json({Success:true , messages})
   }
   catch(err)
@@ -40,6 +45,6 @@ const getHistory= async(req,res,next)=>
 
 
 module.exports = {
-    chatHistory,
-    getHistory,
+    sendMessage,
+    getMessages,
 }

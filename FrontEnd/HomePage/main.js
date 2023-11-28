@@ -1,9 +1,8 @@
 const messageTextArea = document.getElementById("messageTextArea");
 const messageSendBtn = document.getElementById("messageSendBtn");
 const chatBoxBody = document.getElementById("chatBoxBody");
-
-messageSendBtn.addEventListener("click", messageSend);
-document.addEventListener("DOMContentLoaded", getMessagesFromLocalStorage);
+const uiGroup = document.getElementById("groups");
+const groupNameHeading = document.getElementById("groupNameHeading");
 
 function decodeToken(token) {
   const base64Url = token.split(".")[1];
@@ -19,11 +18,36 @@ function decodeToken(token) {
   return JSON.parse(jsonPayload);
 }
 
+async function activeGroup(e) {
+  chatBoxBody.innerHTML = "";
+  localStorage.setItem("chats", JSON.stringify([]));
+  groupNameHeading.innerHTML = "";
+  const activeLi = document.getElementsByClassName("active");
+  if (activeLi.length != 0) {
+    activeLi[0].removeAttribute("class", "active");
+  }
+  let li = e.target;
+  while (li.tagName !== "LI") {
+    li = li.parentElement;
+  }
+  li.setAttribute("class", "active");
+  const groupName = li.querySelector("span").textContent;
+  localStorage.setItem("groupName", groupName);
+  const span = document.createElement("span");
+  span.appendChild(document.createTextNode(groupName));
+  groupNameHeading.appendChild(span);
+  setInterval(() => {
+    getMessages();
+  }, 5000);
+}
+
 async function messageSend() {
     try {
         const token = localStorage.getItem("token");
-    const details={
+        const groupName = localStorage.getItem("groupName");
+       const details={
         message: messageTextArea.value,
+        groupName: groupName,
     }
     const res = await axios.post(
       "http://localhost:4400/chat/sendMessage", details,
@@ -46,20 +70,25 @@ async function messageSend() {
 
 async function getMessages() {
   try {
-    const token = localStorage.getItem("token");
+    const groupName = localStorage.getItem("groupName");
+    if (!groupName || groupName == "") {
+      return alert("Select group to get the message");
+    }
     let param;
     const localStorageChats = JSON.parse(localStorage.getItem("chats"));
-    if (localStorageChats) {
+    if (localStorageChats && localStorageChats.length !== 0) {
       let array = JSON.parse(localStorage.getItem("chats"));
       let length = JSON.parse(localStorage.getItem("chats")).length;
       param = array[length - 1].id;
+    } else {
+      param = 0;
     }
     const res = await axios.get(
-      `http://localhost:4400/chat/getMessages/${param}`, { headers: { "Authorization": token }}
+      `http://localhost:4000/chat/getMessages?param=${param}&groupName=${groupName}`
     );
+    const token = localStorage.getItem("token");
     const decodedToken = decodeToken(token);
     const userId = decodedToken.userId;
-
     const chats = JSON.parse(localStorage.getItem("chats"));
     if (!chats) {
       localStorage.setItem("chats", JSON.stringify(res.data.messages));
@@ -76,12 +105,14 @@ async function getMessages() {
         chatHTML += `
         <div>
           <span class="d-flex justify-content-end px-3 mb-1 text-uppercase small text-white">You</span>
+          <span class="d-flex justify-content-start px-3 mb-1 text-uppercase small text-white">${message.date_time}</span>
           <div class="d-flex justify-content-end mb-4 msg_cotainer_send">${message.message}</div>
         </div>`;
     } else {
       chatHTML += `
         <div>
           <span class="d-flex justify-content-start px-3 mb-1 text-uppercase small text-white">${message.name}</span>
+          <span class="d-flex justify-content-start px-3 mb-1 text-uppercase small text-white">${message.date_time}</span>
           <div class="d-flex justify-content-start mb-4 msg_cotainer">${message.message}</div>
         </div>`;
     }
@@ -92,9 +123,9 @@ async function getMessages() {
   }
 }
 
-setInterval(() => {
-  getMessages();
-}, 5000);
+// setInterval(() => {
+//   getMessages();
+// }, 5000);
 
 async function getMessagesFromLocalStorage() {
     const messages = JSON.parse(localStorage.getItem("chats"));
@@ -137,3 +168,10 @@ async function getMessagesFromLocalStorage() {
   }
   
 
+  messageSendBtn.addEventListener("click", messageSend);
+  // document.addEventListener("DOMContentLoaded", getMessagesFromLocalStorage);
+  uiGroup.addEventListener("click", activeGroup);
+  document.addEventListener("DOMContentLoaded", () => {
+    localStorage.setItem("groupName", "");
+    localStorage.setItem("chats", JSON.stringify([]));
+  });

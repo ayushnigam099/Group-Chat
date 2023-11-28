@@ -7,11 +7,14 @@ const app = express();
 const path= require('path')
 const sequelize= require('./connection/database');
 
-const Users = require('./models/users');
+const User = require('./models/users');
 const Chat = require('./models/chat');
+const Group = require("./models/groupModel");
+const UserGroup = require("./models/userGroup");
 
 const userRoutes = require('./routes/users')
 const chatRoutes= require('./routes/chat')
+const groupRoutes = require("./routes/group");
 
 app.use(express.json());
 app.use(
@@ -21,10 +24,19 @@ app.use(
 );
 app.use('/user', userRoutes);
 app.use('/chat',chatRoutes);
+app.use("/group", groupRoutes);
 
-Users.hasMany(Chat);
-Chat.belongsTo(Users);
+User.hasMany(Chat, { onDelete: "CASCADE", hooks: true });
+Chat.belongsTo(User);
+Chat.belongsTo(Group);
 
+User.hasMany(UserGroup);
+
+Group.hasMany(Chat);
+Group.hasMany(UserGroup);
+
+UserGroup.belongsTo(User);
+UserGroup.belongsTo(Group);
 
 
 sequelize

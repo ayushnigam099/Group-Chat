@@ -5,6 +5,29 @@ const Users = require('../models/users');
 const sequelize= require('../connection/database')
 const { Op } = require("sequelize");
 
+const io = require("socket.io")(5000, {
+  cors: {
+    origin: "http://localhost:4400",
+    methods: ["GET", "POST"],
+    allowedHeaders: ["my-custom-header"],
+    credentials: true,
+  },
+});
+
+io.on("connection", (socket) => {
+  socket.on("getMessages", async (groupName) => {
+    try {
+      const group = await Group.findOne({ where: { name: groupName } });
+      const messages = await Chat.findAll({
+        where: { groupId: group.dataValues.id },
+      });
+      console.log("Request Made");
+      io.emit("messages", messages);
+    } catch (error) {
+      console.log(error);
+    }
+  });
+});
 
 const sendMessage= async(req,res,next)=>
 {
@@ -31,33 +54,32 @@ const sendMessage= async(req,res,next)=>
 
 }
 
-const getMessages= async(req,res,next)=>
-{
-  try {
-    const param = req.params.param;
-    const group = await Group.findOne({
-      where: { name: req.query.groupName },
-    });
-    let messages = await Chat.findAll({
-      attributes: { exclude: ['UserId'] , order: [['date_time', 'ASC']], where: {
-        [Op.and]: {
-          id: {
-            [Op.gt]: param,
-          },
-          groupId: group.dataValues.id,
-        },
-      },
-    }});
-    res.status(200).json({Success:true , messages})
-  }
-  catch(err)
-  {
-    res.status(500).json({error: "Internal Server Error"});
-  }
-}
+// const getMessages= async(req,res,next)=>
+// {
+//   try {
+//     const param = req.params.param;
+//     const group = await Group.findOne({
+//       where: { name: req.query.groupName },
+//     });
+//     let messages = await Chat.findAll({
+//       attributes: { exclude: ['UserId'] , order: [['date_time', 'ASC']], where: {
+//         [Op.and]: {
+//           id: {
+//             [Op.gt]: param,
+//           },
+//           groupId: group.dataValues.id,
+//         },
+//       },
+//     }});
+//     res.status(200).json({Success:true , messages})
+//   }
+//   catch(err)
+//   {
+//     res.status(500).json({error: "Internal Server Error"});
+//   }
+// }
 
 
 module.exports = {
     sendMessage,
-    getMessages,
 }

@@ -3,6 +3,10 @@ const messageSendBtn = document.getElementById("messageSendBtn");
 const chatBoxBody = document.getElementById("chatBoxBody");
 const uiGroup = document.getElementById("groups");
 const groupNameHeading = document.getElementById("groupNameHeading");
+const socket = io("http://127.0.0.1:5000/");
+socket.on("data", (data) => {
+  console.log(data);
+});
 
 function decodeToken(token) {
   const base64Url = token.split(".")[1];
@@ -43,8 +47,17 @@ async function activeGroup(e) {
 
 async function messageSend() {
     try {
+      if (chatBoxBody.querySelector(".groupMembersDiv")) {
+        const members = chatBoxBody.querySelectorAll(".groupMembersDiv");
+        members.forEach((member) => {
+          member.remove();
+        });
+      }
         const token = localStorage.getItem("token");
         const groupName = localStorage.getItem("groupName");
+        if (!groupName || groupName == "") {
+          return alert("Select group to send the message");
+        }
        const details={
         message: messageTextArea.value,
         groupName: groupName,
@@ -54,7 +67,10 @@ async function messageSend() {
         { headers: { "Authorization": token }}
     );
     messageTextArea.value = "";
-  } catch (err){
+    getMessages();
+  } 
+  catch (err)
+  {
   console.log(err);
   if(err.response.status== 400)
   {
@@ -67,105 +83,174 @@ async function messageSend() {
 }
 }
 
-
 async function getMessages() {
-  try {
-    const groupName = localStorage.getItem("groupName");
-    if (!groupName || groupName == "") {
-      return alert("Select group to get the message");
-    }
-    let param;
-    const localStorageChats = JSON.parse(localStorage.getItem("chats"));
-    if (localStorageChats && localStorageChats.length !== 0) {
-      let array = JSON.parse(localStorage.getItem("chats"));
-      let length = JSON.parse(localStorage.getItem("chats")).length;
-      param = array[length - 1].id;
-    } else {
-      param = 0;
-    }
-    const res = await axios.get(
-      `http://localhost:4000/chat/getMessages?param=${param}&groupName=${groupName}`
-    );
-    const token = localStorage.getItem("token");
-    const decodedToken = decodeToken(token);
-    const userId = decodedToken.userId;
-    const chats = JSON.parse(localStorage.getItem("chats"));
-    if (!chats) {
-      localStorage.setItem("chats", JSON.stringify(res.data.messages));
-    } else {
-      res.data.messages.forEach((message) => {
-        chats.push(message);
-      });
-      localStorage.setItem("chats", JSON.stringify(chats));
-    }
-    let chatHTML = '';
+  const token = localStorage.getItem("token");
+  const decodedToken = decodeToken(token);
+  const userId = decodedToken.userId;
+  const groupName = localStorage.getItem("groupName");
 
-    res.data.messages.forEach((message) => {
+  socket.emit("getMessages", groupName);
+
+  socket.on("messages", (messages) => {
+    chatBoxBody.innerHTML = "";
+    messages.forEach((message) => {
       if (message.userId == userId) {
-        chatHTML += `
-        <div>
-          <span class="d-flex justify-content-end px-3 mb-1 text-uppercase small text-white">You</span>
-          <span class="d-flex justify-content-start px-3 mb-1 text-uppercase small text-white">${message.date_time}</span>
-          <div class="d-flex justify-content-end mb-4 msg_cotainer_send">${message.message}</div>
-        </div>`;
-    } else {
-      chatHTML += `
-        <div>
-          <span class="d-flex justify-content-start px-3 mb-1 text-uppercase small text-white">${message.name}</span>
-          <span class="d-flex justify-content-start px-3 mb-1 text-uppercase small text-white">${message.date_time}</span>
-          <div class="d-flex justify-content-start mb-4 msg_cotainer">${message.message}</div>
-        </div>`;
-    }
+        const div = document.createElement("div");
+        chatBoxBody.appendChild(div);
+
+        const messageSendby = document.createElement("span");
+        messageSendby.classList.add(
+          "d-flex",
+          "justify-content-end",
+          "px-3",
+          "mb-1",
+          "text-uppercase",
+          "small",
+          "text-white"
+        );
+        messageSendby.appendChild(document.createTextNode("You"));
+        div.appendChild(messageSendby);
+
+        const messageBox = document.createElement("div");
+        const messageText = document.createElement("div");
+
+        messageBox.classList.add("d-flex", "justify-content-end", "mb-4");
+
+        messageText.classList.add("msg_cotainer_send");
+        messageText.appendChild(document.createTextNode(message.message));
+
+        messageBox.appendChild(messageText);
+        div.appendChild(messageBox);
+      } else {
+        const div = document.createElement("div");
+        chatBoxBody.appendChild(div);
+
+        const messageSendby = document.createElement("span");
+        messageSendby.classList.add(
+          "d-flex",
+          "justify-content-start",
+          "px-3",
+          "mb-1",
+          "text-uppercase",
+          "small",
+          "text-white"
+        );
+        messageSendby.appendChild(document.createTextNode(message.name));
+        div.appendChild(messageSendby);
+
+        const messageBox = document.createElement("div");
+        const messageText = document.createElement("div");
+
+        messageBox.classList.add("d-flex", "justify-content-start", "mb-4");
+
+        messageText.classList.add("msg_cotainer");
+        messageText.appendChild(document.createTextNode(message.message));
+
+        messageBox.appendChild(messageText);
+        div.appendChild(messageBox);
+      }
     });
-    chatBoxBody.innerHTML = chatHTML;
-  } catch (error) {
-    console.log(error);
-  }
+  });
 }
+
+// async function getMessages() {
+//   try {
+//     const groupName = localStorage.getItem("groupName");
+//     if (!groupName || groupName == "") {
+//       return alert("Select group to get the message");
+//     }
+//     let param;
+//     const localStorageChats = JSON.parse(localStorage.getItem("chats"));
+//     if (localStorageChats && localStorageChats.length !== 0) {
+//       let array = JSON.parse(localStorage.getItem("chats"));
+//       let length = JSON.parse(localStorage.getItem("chats")).length;
+//       param = array[length - 1].id;
+//     } else {
+//       param = 0;
+//     }
+//     const res = await axios.get(
+//       `http://localhost:4000/chat/getMessages?param=${param}&groupName=${groupName}`
+//     );
+//     const token = localStorage.getItem("token");
+//     const decodedToken = decodeToken(token);
+//     const userId = decodedToken.userId;
+//     const chats = JSON.parse(localStorage.getItem("chats"));
+//     if (!chats) {
+//       localStorage.setItem("chats", JSON.stringify(res.data.messages));
+//     } else {
+//       res.data.messages.forEach((message) => {
+//         chats.push(message);
+//       });
+//       localStorage.setItem("chats", JSON.stringify(chats));
+//     }
+//     let chatHTML = '';
+
+//     res.data.messages.forEach((message) => {
+//       if (message.userId == userId) {
+//         chatHTML += `
+//         <div>
+//           <span class="d-flex justify-content-end px-3 mb-1 text-uppercase small text-white">You</span>
+//           <span class="d-flex justify-content-start px-3 mb-1 text-uppercase small text-white">${message.date_time}</span>
+//           <div class="d-flex justify-content-end mb-4 msg_cotainer_send">${message.message}</div>
+//         </div>`;
+//     } else {
+//       chatHTML += `
+//         <div>
+//           <span class="d-flex justify-content-start px-3 mb-1 text-uppercase small text-white">${message.name}</span>
+//           <span class="d-flex justify-content-start px-3 mb-1 text-uppercase small text-white">${message.date_time}</span>
+//           <div class="d-flex justify-content-start mb-4 msg_cotainer">${message.message}</div>
+//         </div>`;
+//     }
+//     });
+//     chatBoxBody.innerHTML = chatHTML;
+//   } catch (error) {
+//     console.log(error);
+//   }
+// }
 
 // setInterval(() => {
 //   getMessages();
 // }, 5000);
 
-async function getMessagesFromLocalStorage() {
-    const messages = JSON.parse(localStorage.getItem("chats"));
+// async function getMessagesFromLocalStorage() {
+//     const messages = JSON.parse(localStorage.getItem("chats"));
   
-    const token = localStorage.getItem("token");
-    const decodedToken = decodeToken(token);
-    const userId = decodedToken.userId;
-    chatBoxBody.innerHTML = "";
+//     const token = localStorage.getItem("token");
+//     const decodedToken = decodeToken(token);
+//     const userId = decodedToken.userId;
+//     chatBoxBody.innerHTML = "";
   
-    if (messages) {
-      messages.forEach((message) => {
-        const div = document.createElement("div");
+//     if (messages) {
+//       messages.forEach((message) => {
+//         const div = document.createElement("div");
   
-        let messageSendbyHTML, messageBoxHTML;
+//         let messageSendbyHTML, messageBoxHTML;
   
-        if (message.userId == userId) {
-          messageSendbyHTML = `
-            <span class="d-flex justify-content-end px-3 mb-1 text-uppercase small text-white">You</span>
-          `;
-          messageBoxHTML = `
-            <div class="d-flex justify-content-end mb-4">
-              <div class="msg_cotainer_send">${message.message}</div>
-            </div>
-          `;
-        } else {
-          messageSendbyHTML = `
-            <span class="d-flex justify-content-start px-3 mb-1 text-uppercase small text-white">${message.name}</span>
-          `;
-          messageBoxHTML = `
-            <div class="d-flex justify-content-start mb-4">
-              <div class="msg_cotainer">${message.message}</div>
-            </div>
-          `;
-        }
+//         if (message.userId == userId) {
+//           messageSendbyHTML = `
+//             <span class="d-flex justify-content-end px-3 mb-1 text-uppercase small text-white">You</span>
+//           `;
+//           messageBoxHTML = `
+//             <div class="d-flex justify-content-end mb-4">
+//               <div class="msg_cotainer_send">${message.message}</div>
+//             </div>
+//           `;
+//         } else {
+//           messageSendbyHTML = `
+//             <span class="d-flex justify-content-start px-3 mb-1 text-uppercase small text-white">${message.name}</span>
+//           `;
+//           messageBoxHTML = `
+//             <div class="d-flex justify-content-start mb-4">
+//               <div class="msg_cotainer">${message.message}</div>
+//             </div>
+//           `;
+//         }
   
-        div.innerHTML = `${messageSendbyHTML}${messageBoxHTML}`;
-        chatBoxBody.appendChild(div);
-      });
-    }
-  }
+//         div.innerHTML = `${messageSendbyHTML}${messageBoxHTML}`;
+//         chatBoxBody.appendChild(div);
+//       });
+//     }
+//   }
   
 
   messageSendBtn.addEventListener("click", messageSend);

@@ -3,8 +3,8 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 // Token Generator
-const generateAccessToken = (id, name) => {
-    return jwt.sign({ userId : id, name: name} , process.env.TOKEN);
+const generateAccessToken = (userId, name) => {
+    return jwt.sign({ id : userId, name: name} , process.env.TOKEN_SECRET);
     }
 
 

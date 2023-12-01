@@ -1,0 +1,111 @@
+body {
+  font-family: sans-serif;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+h1 {
+  text-align: center;
+  font-size: 3em;
+  font-weight: bold;
+  margin-top: 100px;
+}
+
+.container {
+  width: 500px;
+  margin: 0 auto;
+}
+
+label {
+  display: block;
+  margin-bottom: 10px;
+}
+
+button {
+  background-color: #0095dd;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 100px;
+}
+
+.navbar {
+  background-color: transparent;
+}
+
+div.main-chat {
+  float: right;
+  box-sizing: border-box;
+  width: 750px;
+  position: relative;
+  padding-bottom: 577px;
+  background-image: url('https://images.unsplash.com/photo-1519750783826-e2420f4d687f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1887&q=80');
+  background-repeat: no-repeat;
+  background-position: 5%;
+}
+
+form div.input-group {
+  position: absolute;
+  top: 540px;
+}
+
+div.table-responsive {
+  position: absolute;
+  width: 750px;
+  border-color: black;
+  max-height: 556px;
+}
+
+div.table-responsive th {
+  position: sticky;
+  top: 0;
+  padding: 19.5px;
+}
+
+div.main-grp {
+  position: relative;
+  float: left;
+  box-sizing: border-box;
+}
+
+div.grp-responsive {
+  position: absolute;
+  width: 529px;
+  border-color: black;
+  max-height: 575px;
+}
+
+div.grp-responsive th {
+  position: sticky;
+  padding: 3.4px;
+  top: 0;
+}
+
+div.main-grp th button{
+  width: 35px;
+}
+
+div.main-grp div.input-group{
+  margin-top: 10px;
+  margin-bottom: 0;
+}
+
+tbody#grptbody td:hover{
+  background-color: #0095dd;
+  color: white;
+  cursor: pointer;
+}
+
+tbody#grptbody td{
+  font-weight: bold;
+  padding: 0;
+  padding-left: 12.5px;
+  padding-bottom: 30px;
+}
+
+#paperClip{
+  cursor: pointer;
+}

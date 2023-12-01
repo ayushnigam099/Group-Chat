@@ -1,17 +1,17 @@
 const Sequelize = require('sequelize');
 const sequelize = require('../connection/database');
 
-const Chat=sequelize.define('Chats',{
+const upload=sequelize.define('upload',{
     id: {
         autoIncrement: true,
         primaryKey: true,
         allowNull: false,
         type: Sequelize.INTEGER
     },
-    chat: {
+    link: {
         allowNull: false,
         type: Sequelize.STRING
     },
 })
 
-module.exports=Chat
+module.exports=upload

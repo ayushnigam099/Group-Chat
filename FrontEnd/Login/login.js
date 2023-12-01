@@ -25,7 +25,7 @@ async function SignUp(e){
         password: password.value
     }
 
-    let response= await axios.post("http://localhost:4400/user/signup", details);
+    let response= await axios.post("http://localhost:3000/user/signup", details);
     if(response.status === 200)     
     {
       alert("Account Successfully Created!");
@@ -56,12 +56,12 @@ try
       email: login_email.value,
       password: login_password.value
     }
-    let response= await axios.post('http://localhost:4400/user/signin', details);
+    let response= await axios.post('http://localhost:3000/user/signin', details);
     if(response.status ===200)
     {
       alert("User Successfully Logged In!")
       localStorage.setItem("token", response.data.token);
-      window.location.href="../HomePage/main.html"
+      window.location.href="../loggedIn/loggedIn.html"
   }
 }
 catch(err)

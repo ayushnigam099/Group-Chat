@@ -1,7 +1,7 @@
 const Sequelize = require('sequelize');
 const sequelize = require('../connection/database');
 
-const archivedChat=sequelize.define('archivedchats',{
+const ArchivedChat =sequelize.define('archivedchats',{
     id: {
         autoIncrement: true,
         primaryKey: true,
@@ -14,4 +14,4 @@ const archivedChat=sequelize.define('archivedchats',{
     },
 })
 
-module.exports=archivedChat
+module.exports=ArchivedChat

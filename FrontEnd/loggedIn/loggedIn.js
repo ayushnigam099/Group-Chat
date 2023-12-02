@@ -9,8 +9,6 @@ const invitebtn = document.getElementById("invite");
 const socket = io('http://localhost:3000', { transport : ['websocket'] });
 
 
-// socket.emit('batman', 'kuch to karle nalle')
-
 invitebtn.addEventListener("click", (e) => {
   e.preventDefault();
   axios.get(`${inviteLink.value}`, { headers: { Authorization: localStorage.getItem("token") }, }).then((result) => {

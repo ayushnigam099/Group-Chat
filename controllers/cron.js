@@ -35,7 +35,7 @@ const runCronJob = async () => {
 };
 
 const startCronJob = () => {
-  const cronJob = new cron.CronJob('* * * * *', runCronJob);
+  const cronJob = new cron.CronJob('0 0 * * *', runCronJob);
   cronJob.start();
 };
 

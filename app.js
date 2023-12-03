@@ -31,7 +31,7 @@ const mainRoutes = require('./routes/group')
 const { startCronJob } = require('./controllers/cron');
 
 app.use(cors());
-app.use(express.static(path.join(__dirname, 'FRONTEND'), { index: false }));
+
 
 app.use(bodyParser.json({ limit: '10mb' }));
 app.use('/user', userRoutes);
@@ -42,7 +42,9 @@ io.on("connection", (socket) => {
   })
 })
 app.use(mainRoutes);
+
 app.use((req, res) => {
+  console.log(req.url);
   res.sendFile(path.join(__dirname, `./FRONTEND/${req.url}`))
 })
 
@@ -65,6 +67,12 @@ ArchivedChat.belongsTo(Group)
 
 User.hasMany(Upload)
 Upload.belongsTo(User)
+
+// Group.hasMany(GroupUser, { foreignKey: 'GroupId' });
+// GroupUser.belongsTo(Group, { foreignKey: 'GroupId' });
+
+// GroupUser.belongsTo(User, { foreignKey: 'UserId' });
+// User.hasMany(GroupUser, { foreignKey: 'UserId' });
 
 sequelize
   .sync()

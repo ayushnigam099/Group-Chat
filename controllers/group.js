@@ -1,6 +1,7 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const Sequelize = require("sequelize");
+const { Op } = require('sequelize');
 const raw = require('../connection/rawdatabse')
 const sequelize = require("../connection/database");
 const User = require("../models/users");
@@ -39,8 +40,10 @@ const removeMember= async(req, res) => {
   if (!req.query.memberId) {
     return res.status(400).send('Invalid request. Member ID is undefined.');
   }
-  
+    GroupUser.destroy({ where: { UserId: req.query.memberId, GroupId: req.query.groupId } })
+    res.status(200).json({Success: "true"})
   }
+  
 
 const getGroup= async(req, res) => {
   if (!req.user.id) {
@@ -54,11 +57,13 @@ const getGroup= async(req, res) => {
       .then((result) => {
         res.json(result[0])
       }).catch((err) => {
+        res.status(500).send('Internal Server Error');
         console.log(err);
       });
   }
 
-  const groupInfo= async(req, res) => {
+
+const groupInfo= async(req, res) => {
     raw.execute(`SELECT cg.id AS groupid, cg.UserId AS admin, gu.UserId AS member
       FROM chatgroups cg
       JOIN GroupUsers gu
@@ -69,12 +74,13 @@ const getGroup= async(req, res) => {
       } else {
         result[0].push(false)
       }
-      res.send(result[0])
+      res.status(200).json(result[0])
   
     }).catch((err) => {
       console.log(err);
     });
   }
+
 
 const deleteGroup= async(req, res) => {
     Group.findByPk(req.params.groupId).then((result) => {
@@ -102,25 +108,26 @@ const deleteGroup= async(req, res) => {
   }
 
   const inviteLink= async(req, res) => {
-    raw.execute(`SELECT * FROM GroupUsers
-    WHERE GroupId=${req.query.grpId} AND UserId=${req.user.id}`).then((result) => {
+    try {
+      const result = await raw.execute(`SELECT * FROM GroupUsers WHERE GroupId=${req.query.grpId} AND UserId=${req.user.id}`);
+      
       if (!result[0][0]) {
-        GroupUser.create({
+        await GroupUser.create({
           UserId: req.user.id,
           GroupId: parseInt(req.query.grpId)
-        }).catch((err) => {
-          console.log(err);
         });
+      return res.status(200).json({Success: "true"});
       } else {
-        res.status(401).send('Already a member.')
-  
+        res.status(401).send('Already a member.');
       }
-    }).catch((err) => {
+    } catch (err) {
       console.log(err);
-    });
+    }
+    
   }
 
   const postChat= async(req, res, next) => {
+                                                    // 
     Chat.create({
       chat: req.body.chat,
       UserId: req.user.id,
@@ -134,30 +141,33 @@ const deleteGroup= async(req, res) => {
       });
   }
 
-  const getChat= async(req, res, next) => {
-    if (req.query.MessageId == 'undefined') {
-      raw.execute(`SELECT *
-      FROM Chats c
-      WHERE chatgroupId=${req.query.GroupId}`)
-        .then((result) => {
-          res.json(result[0])
-        }).catch((err) => {
-          console.log(err);
-        });
-    } else {
-      Chat.findAll({ where: { chatgroupId: req.query.GroupId } }).then((result) => {
+  const getChat = async (req, res, next) => {
+    try {
+      if (req.query.MessageId === 'undefined') {
+        const result = await raw.execute(`
+          SELECT *
+          FROM Chats c
+          WHERE chatgroupId=${req.query.GroupId}
+        `);
+        res.json(result[0]);
+      } else {
+        const result = await Chat.findAll({ where: { chatgroupId: req.query.GroupId } });
+  
         if (result) {
-          lastLSId = req.query.MessageId
-          lastId = result.slice(-1)[0].id
+          lastLSId = req.query.MessageId;
+          lastId = result.slice(-1)[0].id;
+  
           if (lastLSId < lastId) {
-            res.json(result.slice(lastLSId, lastId))
+            res.json(result.slice(lastLSId, lastId));
           }
         }
-      }).catch((err) => {
-        console.log(err);
-      });
+      }
+    } catch (err) {
+      console.log(err);
+      res.status(500).json({ error: 'Internal Server Error' });
     }
-  }
+  };
+  
 
 
   const upload= async (req, res, next) => {
@@ -178,7 +188,7 @@ const deleteGroup= async(req, res) => {
       } else {
         Upload.create({
           link: data.Location,
-          userId: req.user.id,
+          UserId: req.user.id,
         });
         res.send(data);
       }

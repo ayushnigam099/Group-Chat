@@ -6,28 +6,26 @@ const chatthead = document.getElementById("chatthead");
 const main_chat = document.getElementById("main-chat");
 const inviteLink = document.getElementById("inviteLink");
 const invitebtn = document.getElementById("invite");
-const socket = io('http://localhost:3000', { transport : ['websocket'] });
+const socket = io('http://localhost:3000', { transport: ['websocket'] });
 
-
-invitebtn.addEventListener("click", (e) => {
+invitebtn.addEventListener("click", async (e) => {
   e.preventDefault();
-  axios.get(`${inviteLink.value}`, { headers: { Authorization: localStorage.getItem("token") }, }).then((result) => {
-
-  }).catch((err) => {
+  try {
+    await axios.get(`${inviteLink.value}`, { headers: { Authorization: localStorage.getItem("token") } });
+    location.reload();
+  } catch (err) {
     alert("Already a user.");
-  });
-  location.reload();
-});
+  }});
 
-crtGrp.addEventListener("click", (e) => {
+crtGrp.addEventListener("click", async (e) => {
   e.preventDefault();
   const grpName = prompt("Name your Group:", "New Group");
   if (grpName) {
-    axios.get(`http://localhost:3000/groupParams/${grpName}`, { headers: { Authorization: localStorage.getItem("token") }, }).then((result) => {
-
-    }).catch((err) => {
+    try {
+      await axios.get(`http://localhost:3000/groupParams/${grpName}`, { headers: { Authorization: localStorage.getItem("token") } });
+    } catch (err) {
       console.log(err);
-    });
+    }
   }
   location.reload();
 });
@@ -36,39 +34,45 @@ logOut.addEventListener("click", (e) => {
   e.preventDefault();
   localStorage.removeItem("token");
   localStorage.removeItem("message");
-  location.replace("http://127.0.0.1:5000/Login/login.html");
+  location.replace("http://127.0.0.1:5000/FRONTEND/Login/login.html");
 });
 
 window.addEventListener("DOMContentLoaded", async (e) => {
   e.preventDefault();
   if (!localStorage.getItem("token")) {
-    location.replace("http://127.0.0.1:5000/Login/login.html");
+    location.replace("http://127.0.0.1:5000//FRONTEND/Login/login.html");
   }
   try {
-    renderGroup();
+     await renderGroup();
   } catch (err) {
     localStorage.removeItem("token");
     localStorage.removeItem("message");
-    location.replace("http://127.0.0.1:5000/Login/login.html");
+    location.replace("http://127.0.0.1:5000/FRONTEND/Login/login.html");
   }
 });
 
+// Function to render the chat interface
 export async function renderChat(groupName, groupId) {
   main_chat.innerHTML = `<div class="table-responsive" style="overflow-x: hidden;" id="table">
                       <table class="table table-striped">
                         <thead id="chatthead">
-                          <tr>
-                            <th scope="col">${groupName}
-                            <div class="btn-group dropend"> 
-                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="width: 35px; padding-top: 0"></button>
-                            <ul class="dropdown-menu dropdown-menu-end" id="dropdown2">
-                              <li><a class="dropdown-item" href="#">Copy invite link</a></li>
-                              <li><a class="dropdown-item" href="#">Group members</a></li>
-                              <li><a class="dropdown-item" href="#">Delete group</a></li>
-                            </ul>
+                        <tr>
+                        <th scope="col">
+                          <div class="group-header">
+                            <span class="group-name">${groupName}</span>
+                            <div class="dropdown">
+                              <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-ellipsis-v"></i>
+                              </button>
+                              <ul class="dropdown-menu dropdown-menu-end" id="dropdown2">
+                                <li><a class="dropdown-item" href="#">Copy invite link</a></li>
+                                <li><a class="dropdown-item" href="#">Group members</a></li>
+                                <li><a class="dropdown-item" href="#">Delete group</a></li>
+                              </ul>
                             </div>
-                            </th>                            
-                          </tr>
+                          </div>
+                        </th>
+                      </tr>
                         </thead>
                         <tbody id="chattbody"></tbody>
                       </table>
@@ -88,7 +92,7 @@ export async function renderChat(groupName, groupId) {
   const chat = document.getElementById("chat");
   const send = document.getElementById("send");
 
-  copyLink.addEventListener("click", (e) => {
+  copyLink.addEventListener("click", async (e) => {
     if (e.target.textContent == "Copy invite link") {
       let inputElement = document.createElement("input");
       inputElement.setAttribute("value", `http://localhost:3000/copyLink?grpname=${groupName}&grpId=${groupId}`);
@@ -96,8 +100,10 @@ export async function renderChat(groupName, groupId) {
       inputElement.select();
       document.execCommand("copy");
       inputElement.parentNode.removeChild(inputElement);
-    } else if (e.target.textContent === "Group members") {
-      axios.get(`http://localhost:3000/groupInfo/${groupId}`, { headers: { Authorization: localStorage.getItem("token") } }).then((result) => {
+    } 
+    else if (e.target.textContent === "Group members") {
+      try {
+        const result = await axios.get(`http://localhost:3000/groupInfo/${groupId}`, { headers: { Authorization: localStorage.getItem("token") } });
         chattbody.innerHTML = ``;
         result.data.slice(0, result.data.length - 1).forEach(async (element) => {
           const row = document.createElement("tr");
@@ -115,9 +121,10 @@ export async function renderChat(groupName, groupId) {
               deleteb.setAttribute("class", "btn btn-danger btn-sm");
               deleteb.setAttribute("type", "button");
               deleteb.appendChild(document.createTextNode("Remove"));
-              deleteb.addEventListener("click", (e) => {
+
+              deleteb.addEventListener("click", async (e) => {
                 e.preventDefault();
-                axios.get(`http://localhost:3000/removeMember?memberId=${e.target.parentElement.id}&groupId=${groupId}`, { headers: { Authorization: localStorage.getItem("token") } });
+                await axios.get(`http://localhost:3000/removeMember?memberId=${e.target.parentElement.id}&groupId=${groupId}`, { headers: { Authorization: localStorage.getItem("token") } });
                 chattbody.removeChild(e.target.parentElement);
               });
               row.appendChild(data);
@@ -137,32 +144,35 @@ export async function renderChat(groupName, groupId) {
             }
           }
         });
-      }).catch((err) => {
+      } catch (err) {
         console.log(err);
-      });
+      }
     } else {
-      axios.get(`http://localhost:3000/deleteGroup/${groupId}`, { headers: { Authorization: localStorage.getItem("token") } }).then((result) => {
+      try {
+        await axios.get(`http://localhost:3000/deleteGroup/${groupId}`, { headers: { Authorization: localStorage.getItem("token") } });
         location.reload();
-      }).catch((err) => {
+      } catch (err) {
         alert("Sorry. You are not the admin.");
         console.log(err);
-      });
+      }
     }
   });
-  chattbody.innerHTML = ''
+
+  chattbody.innerHTML = '';
   localStorage.setItem("message", JSON.stringify([]));
+
   try {
-    const chat = await axios.get(`http://localhost:3000/getChat/?MessageId=${JSON.parse(localStorage.getItem("message"))[-1]}&GroupId=${groupId}`, { headers: { Authorization: localStorage.getItem("token") } });
-    if (chat) {
+    const chatData = await axios.get(`http://localhost:3000/getChat/?MessageId=${JSON.parse(localStorage.getItem("message"))[-1]}&GroupId=${groupId}`, { headers: { Authorization: localStorage.getItem("token") } });
+    if (chatData) {
       let message = JSON.parse(localStorage.getItem("message"));
-      message = message.concat(chat.data);
-      message = message.slice(-10);
+      message = message.concat(chatData.data);
+      // message = message.slice(-10);
       localStorage.setItem("message", JSON.stringify(message));
     }
     let array = JSON.parse(localStorage.getItem("message"));
     for (let element of array) {
       if (element.chat.indexOf('.txt') == -1) {
-        const msg = element.chat
+        const msg = element.chat;
         const row = document.createElement("tr");
         const data = document.createElement("td");
         try {
@@ -175,16 +185,16 @@ export async function renderChat(groupName, groupId) {
         }
       } else {
         const base64 = await axios.get(`http://localhost:3000/fetchbase64/${element.chat}`, { headers: { Authorization: localStorage.getItem("token") } });
-        const img = document.createElement('img')
-        img.setAttribute('src', `${base64.data.chat}`)
-        img.setAttribute('class', 'img-fluid')
-        const msg = img
+        const img = document.createElement('img');
+        img.setAttribute('src', `${base64.data.chat}`);
+        img.setAttribute('class', 'img-fluid');
+        const msg = img;
         const row = document.createElement("tr");
         const data = document.createElement("td");
         try {
           const User = await axios.get(`http://localhost:3000/getUser/${element.UserId}`, { headers: { Authorization: localStorage.getItem("token") } });
           data.appendChild(document.createTextNode(`${User.data.name}: `));
-          data.appendChild(msg)
+          data.appendChild(msg);
           row.appendChild(data);
           chattbody.appendChild(row);
         } catch (error) {
@@ -192,10 +202,10 @@ export async function renderChat(groupName, groupId) {
         }
       }
     }
-    // chattbody.scrollTop = chattbody.scrollHeight
   } catch (err) {
     console.log(err);
   }
+
   send.addEventListener("click", async (e) => {
     e.preventDefault();
     try {
@@ -203,6 +213,7 @@ export async function renderChat(groupName, groupId) {
         chat: chat.value,
         chatgroupid: groupId,
       }, { headers: { Authorization: localStorage.getItem("token") } });
+
       try {
         const row = document.createElement("tr");
         const data = document.createElement("td");
@@ -213,26 +224,29 @@ export async function renderChat(groupName, groupId) {
       } catch (err) {
         console.log(err);
       }
-      chat.value = ''
+      chat.value = '';
     } catch (error) {
       console.log(error);
     }
-    socket.emit('batman', 'Send Pressed')
+    socket.emit('batman', 'Send Pressed');
   });
+
   chattbody.setAttribute("style", '"overflow-x: hidden;"');
 
-  const paperClip = document.getElementById('paperClip')
-  const imageFile = document.getElementById('imageFile')
+  const paperClip = document.getElementById('paperClip');
+  const imageFile = document.getElementById('imageFile');
   function fileFunction() {
-    imageFile.click()
+    imageFile.click();
   }
-  paperClip.onclick = fileFunction
+  paperClip.onclick = fileFunction;
 }
 
 let selectedRow = null;
 async function renderGroup() {
-  axios.get(`http://localhost:3000/group/getGroup`, { headers: { Authorization: localStorage.getItem("token") } }).then((result) => {
-    for (let element of result.data) {
+  try {
+    const result = await axios.get(`http://localhost:3000/group/getGroup`, { headers: { Authorization: localStorage.getItem("token") } });
+    console.log(">>>>>>", result)
+    result.data.forEach((element) => {
       const row = document.createElement("tr");
       row.setAttribute("id", `${element.GroupId}`);
       const data = document.createElement("td");
@@ -244,19 +258,19 @@ async function renderGroup() {
         }
         e.target.setAttribute("style", "background-color: #0095dd; color: white;");
         selectedRow = e.target;
-        renderChat(row.textContent, e.target.parentElement.id);
+        await renderChat(row.textContent, e.target.parentElement.id);
         socket.on('renderChat', (message) => {
           renderChat(row.textContent, e.target.parentElement.id);
-        })
+        });
       });
       grptbody.prepend(row);
-    }
-  }).catch((err) => {
+    });
+  } catch (err) {
     console.log(err);
-  });
+  }
 }
 
-const inputElement = document.getElementById('myInput')
+const inputElement = document.getElementById('myInput');
 function myFunction() {
   const input = document.getElementById("myInput");
   const filter = input.value.toUpperCase();
@@ -274,24 +288,31 @@ function myFunction() {
     }
   }
 }
-inputElement.onkeyup = myFunction
+inputElement.onkeyup = myFunction;
 
-window.SendFile=function SendFile(event, groupId, groupName) {
-  let file = event.files[0]
-  let reader = new FileReader()
+window.SendFile = async function SendFile(event, groupId, groupName) {
+  let file = event.files[0];
+  let reader = new FileReader();
   reader.addEventListener("load", async function () {
-    const result = await axios.post("http://localhost:3000/file/upload", {
-      chat: reader.result,
-      chatgroupid: groupId,
-    }, { headers: { Authorization: localStorage.getItem("token") } });
-    const response = await axios.post("http://localhost:3000/postChat", {
-      chat: result.data.Key,
-      chatgroupid: groupId,
-    }, { headers: { Authorization: localStorage.getItem("token") } });
-    renderChat(groupName, groupId)
-    socket.emit('batman', 'Send Pressed')
-  }, false)
+    try {
+      const result = await axios.post("http://localhost:3000/file/upload", {
+        chat: reader.result,
+        chatgroupid: groupId,
+      }, { headers: { Authorization: localStorage.getItem("token") } });
+
+      const response = await axios.post("http://localhost:3000/postChat", {
+        chat: result.data.Key,
+        chatgroupid: groupId,
+      }, { headers: { Authorization: localStorage.getItem("token") } });
+
+      await renderChat(groupName, groupId);
+      socket.emit('batman', 'Send Pressed');
+    } catch (error) {
+      console.log(error);
+    }
+  }, false);
+
   if (file) {
-    reader.readAsDataURL(file)
+    reader.readAsDataURL(file);
   }
 }

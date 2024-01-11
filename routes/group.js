@@ -3,6 +3,10 @@ const express = require('express');
 const mainController = require('../controllers/group');
 const authorization = require("../middleware/auth");
 const router = express.Router();
+// Multer configuration
+const multer = require('multer');
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
 
 router.get('/groupParams/:groupName', authorization.authenticate, mainController.groupName)
 
@@ -22,7 +26,8 @@ router.post("/postChat", authorization.authenticate, mainController.postChat)
 
 router.get("/getChat/", authorization.authenticate, mainController.getChat)
 
-router.post("/file/upload", authorization.authenticate, mainController.upload)
+router.post("/file/upload", authorization.authenticate, upload.single('image'), mainController.uploadImage)
+
 
 router.get('/fetchbase64/:txt',authorization.authenticate,mainController.fetchBase)
 

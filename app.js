@@ -68,12 +68,6 @@ ArchivedChat.belongsTo(Group)
 User.hasMany(Upload)
 Upload.belongsTo(User)
 
-// Group.hasMany(GroupUser, { foreignKey: 'GroupId' });
-// GroupUser.belongsTo(Group, { foreignKey: 'GroupId' });
-
-// GroupUser.belongsTo(User, { foreignKey: 'UserId' });
-// User.hasMany(GroupUser, { foreignKey: 'UserId' });
-
 sequelize
   .sync()
   // .sync({force: true})

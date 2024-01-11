@@ -81,9 +81,12 @@ export async function renderChat(groupName, groupId) {
                       <div class="input-group mb-3">
                         <input type="text" class="form-control" placeholder="Message" aria-label="Message"
                           aria-describedby="button-addon2" id="chat">
-                          <span class="input-group-text" id="paperClip" id="paperClip"><i class="fa fa-paperclip">
-                            <input type="file" id="imageFile" onchange="SendFile(this, ${groupId}, '${groupName}')" style="display:none;">
-                          </i></span>
+                          <form action="#" enctype="multipart/form-data">
+                            <input type="file" id="imageFile" onchange="sendFileToBackend(${groupId}, '${groupName}')" accept="image/*" name="image" style="display:none;">
+                            <span class="input-group-text" id="paperClip" onclick="triggerImageInput()">
+                                <i class="fa fa-paperclip"></i>
+                            </span>
+                        </form>
                         <button type="button" class="btn btn-info" id="send">Send</button>
                       </div>
                     </form>`;
@@ -165,6 +168,7 @@ export async function renderChat(groupName, groupId) {
     const chatData = await axios.get(`http://localhost:3000/getChat/?MessageId=${JSON.parse(localStorage.getItem("message"))[-1]}&GroupId=${groupId}`, { headers: { Authorization: localStorage.getItem("token") } });
     if (chatData) {
       let message = JSON.parse(localStorage.getItem("message"));
+      console.log("hello", message);
       message = message.concat(chatData.data);
       // message = message.slice(-10);
       localStorage.setItem("message", JSON.stringify(message));
@@ -186,15 +190,17 @@ export async function renderChat(groupName, groupId) {
       } else {
         const base64 = await axios.get(`http://localhost:3000/fetchbase64/${element.chat}`, { headers: { Authorization: localStorage.getItem("token") } });
         const img = document.createElement('img');
-        img.setAttribute('src', `${base64.data.chat}`);
-        img.setAttribute('class', 'img-fluid');
-        const msg = img;
+        img.src = `${base64.data.chat}`;
+        img.classList.add('img-fluid');
+        img.style.maxWidth = '200px';
+        img.style.maxHeight = '200px';
+  
         const row = document.createElement("tr");
         const data = document.createElement("td");
         try {
           const User = await axios.get(`http://localhost:3000/getUser/${element.UserId}`, { headers: { Authorization: localStorage.getItem("token") } });
           data.appendChild(document.createTextNode(`${User.data.name}: `));
-          data.appendChild(msg);
+          data.appendChild(img);
           row.appendChild(data);
           chattbody.appendChild(row);
         } catch (error) {
@@ -232,13 +238,6 @@ export async function renderChat(groupName, groupId) {
   });
 
   chattbody.setAttribute("style", '"overflow-x: hidden;"');
-
-  const paperClip = document.getElementById('paperClip');
-  const imageFile = document.getElementById('imageFile');
-  function fileFunction() {
-    imageFile.click();
-  }
-  paperClip.onclick = fileFunction;
 }
 
 let selectedRow = null;
@@ -290,29 +289,94 @@ function myFunction() {
 }
 inputElement.onkeyup = myFunction;
 
-window.SendFile = async function SendFile(event, groupId, groupName) {
-  let file = event.files[0];
-  let reader = new FileReader();
-  reader.addEventListener("load", async function () {
-    try {
-      const result = await axios.post("http://localhost:3000/file/upload", {
-        chat: reader.result,
-        chatgroupid: groupId,
-      }, { headers: { Authorization: localStorage.getItem("token") } });
+// window.SendFile = async function SendFile(event, groupId, groupName) {
+//   let file = event.files[0];
+//   let reader = new FileReader();
+//   reader.addEventListener("load", async function () {
+//     try {
+//       const result = await axios.post("http://localhost:3000/file/upload", {
+//         chat: reader.result,
+//         chatgroupid: groupId,
+//       }, { headers: { Authorization: localStorage.getItem("token") } });
 
+//       const response = await axios.post("http://localhost:3000/postChat", {
+//         chat: result.data.Location,
+//         chatgroupid: groupId,
+//       }, { headers: { Authorization: localStorage.getItem("token") } });
+
+//       await renderChat(groupName, groupId);
+//       socket.emit('batman', 'Send Pressed');
+//     } catch (error) {
+//       console.log(error);
+//     }
+//   }, false);
+
+//   if (file) {
+//     reader.readAsDataURL(file);
+//   }
+// }
+
+
+// async function sendFileToBackend( groupId, groupName) {
+//   const fileInput = document.getElementById('imageFile');
+//   let file = fileInput.files[0];
+//   // let reader = new FileReader();
+//   if (file) {
+//     const formData = new FormData();
+//     formData.append('image', file);
+//     try {
+//       console.log("meoww", formData)
+//       const result = await axios.post("http://localhost:3000/file/upload", {
+//         formData,
+//         chatgroupid: groupId,
+//       }, { headers: { Authorization: localStorage.getItem("token") } });
+
+//       const response = await axios.post("http://localhost:3000/postChat", {
+//         chat: result.imageUrl,
+//         chatgroupid: groupId,
+//       }, { headers: { Authorization: localStorage.getItem("token") } });
+
+//       await renderChat(groupName, groupId);
+//       socket.emit('batman', 'Send Pressed');
+//     } catch (error) {
+//       console.log(error);
+//     }
+//   };
+// }
+
+window.sendFileToBackend =async function sendFileToBackend(groupId, groupName) {
+  const fileInput = document.getElementById('imageFile');
+  const file = fileInput.files[0];
+
+  if (file) {
+    const formData = new FormData();
+    formData.append('image', file);
+
+    try {
+      console.log("formData", formData);
+
+      // Assuming you have the correct endpoint for file upload
+      const result = await axios.post("http://localhost:3000/file/upload", formData, {
+        headers: { 
+          'Content-Type': 'multipart/form-data',
+          'Authorization': localStorage.getItem("token"),
+        },
+      });
+
+      // Assuming your server returns an imageUrl in the response
       const response = await axios.post("http://localhost:3000/postChat", {
-        chat: result.data.Key,
+        chat: result.data.imageUrl,
         chatgroupid: groupId,
-      }, { headers: { Authorization: localStorage.getItem("token") } });
+      }, {
+        headers: { Authorization: localStorage.getItem("token") },
+      });
 
       await renderChat(groupName, groupId);
       socket.emit('batman', 'Send Pressed');
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
-  }, false);
-
-  if (file) {
-    reader.readAsDataURL(file);
+  } else {
+    console.error('No file selected');
   }
 }
